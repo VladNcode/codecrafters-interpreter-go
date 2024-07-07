@@ -5,6 +5,11 @@ import (
 	"os"
 )
 
+const (
+	LEFT_PAREN  rune = '('
+	RIGHT_PAREN rune = ')'
+)
+
 func main() {
 	if len(os.Args) < 3 {
 		fmt.Fprintln(os.Stderr, "Usage: ./your_program.sh tokenize <filename>")
@@ -20,15 +25,21 @@ func main() {
 
 	
 	filename := os.Args[2]
-	fileContents, err := os.ReadFile(filename)
+	rawFileContents, err := os.ReadFile(filename)
+
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error reading file: %v\n", err)
 		os.Exit(1)
 	}
-	
-	if len(fileContents) > 0 {
-		panic("Scanner not implemented")
-	} else {
-		fmt.Println("EOF  null") // Placeholder, remove this line when implementing the scanner
+
+	for _, current := range string(rawFileContents) {
+		switch current {
+			case LEFT_PAREN:
+				fmt.Println("LEFT_PAREN ( null")
+			case RIGHT_PAREN:
+				fmt.Println("RIGHT_PAREN ) null")
+		}
 	}
+
+	fmt.Printf("EOF  null")
 }
