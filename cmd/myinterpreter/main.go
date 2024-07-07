@@ -7,6 +7,23 @@ import (
 	"strings"
 )
 
+func isIdentifier(c string) bool {
+	return (c >= "a" && c <= "z") ||
+		(c >= "A" && c <= "Z") || (c >= "0" && c <= "9") || c == "_"
+}
+
+func removeTrailingZeroes(s string) string {
+	if !strings.HasSuffix(s, "0") {
+		return s
+	}
+
+	// Remove all trailing zeroes
+	s = strings.TrimRight(s, "0")
+
+	// Add a single trailing zero
+	return s + "0"
+}
+
 func main() {
 	exitCode := 0 // Default exit code
 
@@ -77,8 +94,13 @@ func main() {
 
 	for lineNumber, line := range lines {
 		shouldSkip := false
+
+		identifierMode := false
+		identifierText := ""
+
 		stringMode := false
 		stringText := ""
+
 		numberMode := false
 		numberText := ""
 		float := false
@@ -86,13 +108,55 @@ func main() {
 		for idx := 0; idx < len(line); idx++ {
 			token := string(line[idx])
 
-			if tokenType, ok := tokenToType[token]; !ok && token != "\"" && !stringMode && !numberMode && !isDigit.MatchString(token) {
+			if tokenType, ok := tokenToType[token]; !ok && token != "\"" && !identifierMode && !stringMode && !numberMode && !isDigit.MatchString(token) && !isIdentifier(token) {
 				fmt.Fprintf(os.Stderr, "[line %d] Error: Unexpected character: %s\n", lineNumber+1, token)
 				exitCode = 65
 			} else if idx == len(line)-1 && stringMode && token != "\"" {
 				fmt.Fprintf(os.Stderr, "[line %d] Error: Unterminated string.\n", lineNumber+1)
 				exitCode = 65
 			} else {
+
+				if numberMode && !isDigit.MatchString(token) && token != "." {
+					if float {
+						fmt.Printf("NUMBER %s %s\n", numberText, removeTrailingZeroes(numberText))
+					} else {
+						fmt.Printf("NUMBER %s %s.0\n", numberText, numberText)
+					}
+
+					numberMode = false
+					numberText = ""
+					float = false
+				}
+
+				if isIdentifier(token) && !stringMode && !numberMode {
+					if isDigit.MatchString(token) {
+						if identifierMode {
+							identifierText += token
+
+							if idx != len(line)-1 {
+								continue
+							}
+						}
+					} else {
+						if !identifierMode {
+							identifierMode = true
+						}
+
+						identifierText += token
+
+						if idx != len(line)-1 {
+							continue
+						}
+					}
+
+				}
+
+				if (!isIdentifier(token) || idx == len(line)-1) && identifierMode {
+					fmt.Printf("IDENTIFIER %s null\n", identifierText)
+					identifierMode = false
+					identifierText = ""
+				}
+
 				if token == "\"" {
 					if !stringMode {
 						stringMode = true
@@ -143,7 +207,7 @@ func main() {
 						continue
 					} else {
 						if float {
-							fmt.Printf("NUMBER %s %s\n", numberText, numberText)
+							fmt.Printf("NUMBER %s %s\n", numberText, removeTrailingZeroes(numberText))
 						} else {
 							fmt.Printf("NUMBER %s %s.0\n", numberText, numberText)
 						}
@@ -175,7 +239,10 @@ func main() {
 					idx += 1
 				}
 
-				fmt.Printf("%s %s null\n", tokenType, token)
+				if tokenType != "" && token != "" {
+					fmt.Printf("%s %s null\n", tokenType, token)
+				}
+
 			}
 		}
 
