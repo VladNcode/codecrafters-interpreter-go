@@ -5,11 +5,6 @@ import (
 	"os"
 )
 
-const (
-	LEFT_PAREN  rune = '('
-	RIGHT_PAREN rune = ')'
-)
-
 func main() {
 	if len(os.Args) < 3 {
 		fmt.Fprintln(os.Stderr, "Usage: ./your_program.sh tokenize <filename>")
@@ -32,12 +27,16 @@ func main() {
 		os.Exit(1)
 	}
 
+	runeToName := map[rune]string{
+		'(': "LEFT_PAREN",
+		')': "RIGHT_PAREN",
+		'{': "LEFT_BRACE",
+		'}': "RIGHT_BRACE",
+	}
+
 	for _, current := range string(rawFileContents) {
-		switch current {
-			case LEFT_PAREN:
-				fmt.Println("LEFT_PAREN ( null")
-			case RIGHT_PAREN:
-				fmt.Println("RIGHT_PAREN ) null")
+		if name, ok := runeToName[current]; ok {
+			fmt.Printf("%s %c null\n", name, current)
 		}
 	}
 
