@@ -52,6 +52,7 @@ func main() {
 		"!=": "BANG_EQUAL",
 		"<=": "LESS_EQUAL",
 		">=": "GREATER_EQUAL",
+		"//": "Comment",
 	}
 
 	operators := map[string]bool{
@@ -59,11 +60,14 @@ func main() {
 		"!": true,
 		"<": true,
 		">": true,
+		"/": true,
 	}
 
 	lines := strings.Split(string(rawFileContents), "\n")
 
 	for lineNumber, line := range lines {
+		shouldSkip := false
+
 		for idx := 0; idx < len(line); idx++ {
 			token := string(line[idx])
 
@@ -74,14 +78,22 @@ func main() {
 				if operators[token] && idx+2 <= len(line) && doublesToType[line[idx:idx+2]] != "" {
 					token = line[idx : idx+2]
 					tokenType = doublesToType[token]
+
+					if tokenType == "Comment" {
+						shouldSkip = true
+						break
+					}
+
 					idx += 1
 				}
 
 				fmt.Printf("%s %s null\n", tokenType, token)
 			}
-
 		}
 
+		if shouldSkip {
+			continue
+		}
 	}
 
 	fmt.Printf("EOF  null")
