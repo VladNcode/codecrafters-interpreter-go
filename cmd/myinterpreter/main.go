@@ -3,9 +3,12 @@ package main
 import (
 	"fmt"
 	"os"
+	"strings"
 )
 
 func main() {
+	exitCode := 0 // Default exit code
+
 	if len(os.Args) < 3 {
 		fmt.Fprintln(os.Stderr, "Usage: ./your_program.sh tokenize <filename>")
 		os.Exit(1)
@@ -18,7 +21,6 @@ func main() {
 		os.Exit(1)
 	}
 
-	
 	filename := os.Args[2]
 	rawFileContents, err := os.ReadFile(filename)
 
@@ -41,11 +43,19 @@ func main() {
 		'/': "SLASH",
 	}
 
-	for _, current := range string(rawFileContents) {
-		if name, ok := runeToName[current]; ok {
-			fmt.Printf("%s %c null\n", name, current)
+	lines := strings.Split(string(rawFileContents), "\n")
+
+	for lineNumber, line := range lines {
+		for _, current := range line {
+			if name, ok := runeToName[current]; ok {
+				fmt.Printf("%s %c null\n", name, current)
+			} else {
+				fmt.Fprintf(os.Stderr, "[line %d] Error: Unexpected character: %c\n", lineNumber+1, current)
+				exitCode = 65
+			}
 		}
 	}
 
 	fmt.Printf("EOF  null")
+	os.Exit(exitCode)
 }
