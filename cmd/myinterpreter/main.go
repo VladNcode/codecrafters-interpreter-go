@@ -29,39 +29,55 @@ func main() {
 		os.Exit(1)
 	}
 
-	runeToName := map[rune]string{
-		'(': "LEFT_PAREN",
-		')': "RIGHT_PAREN",
-		'{': "LEFT_BRACE",
-		'}': "RIGHT_BRACE",
-		',': "COMMA",
-		'.': "DOT",
-		'-': "MINUS",
-		'+': "PLUS",
-		';': "SEMICOLON",
-		'*': "STAR",
-		'/': "SLASH",
-		'=': "EQUAL",
+	tokenToType := map[string]string{
+		"(": "LEFT_PAREN",
+		")": "RIGHT_PAREN",
+		"{": "LEFT_BRACE",
+		"}": "RIGHT_BRACE",
+		",": "COMMA",
+		".": "DOT",
+		"-": "MINUS",
+		"+": "PLUS",
+		";": "SEMICOLON",
+		"*": "STAR",
+		"/": "SLASH",
+		"=": "EQUAL",
+		"!": "BANG",
+		"<": "LESS",
+		">": "GREATER",
+	}
+
+	doublesToType := map[string]string{
+		"==": "EQUAL_EQUAL",
+		"!=": "BANG_EQUAL",
+		"<=": "LESS_EQUAL",
+		">=": "GREATER_EQUAL",
+	}
+
+	operators := map[string]bool{
+		"=": true,
+		"!": true,
+		"<": true,
+		">": true,
 	}
 
 	lines := strings.Split(string(rawFileContents), "\n")
 
 	for lineNumber, line := range lines {
-
 		for idx := 0; idx < len(line); idx++ {
-			current := rune(line[idx])
+			token := string(line[idx])
 
-			if idx+2 <= len(line) && line[idx:idx+2] == "==" {
-				fmt.Printf("EQUAL_EQUAL == null\n")
-				idx += 1 // Skip the next character since its a part of '=='
-				continue
-			}
-
-			if name, ok := runeToName[current]; ok {
-				fmt.Printf("%s %c null\n", name, current)
-			} else {
-				fmt.Fprintf(os.Stderr, "[line %d] Error: Unexpected character: %c\n", lineNumber+1, current)
+			if tokenType, ok := tokenToType[token]; !ok {
+				fmt.Fprintf(os.Stderr, "[line %d] Error: Unexpected character: %s\n", lineNumber+1, token)
 				exitCode = 65
+			} else {
+				if operators[token] && idx+2 <= len(line) && doublesToType[line[idx:idx+2]] != "" {
+					token = line[idx : idx+2]
+					tokenType = doublesToType[token]
+					idx += 1
+				}
+
+				fmt.Printf("%s %s null\n", tokenType, token)
 			}
 
 		}
