@@ -74,14 +74,36 @@ func main() {
 
 	for lineNumber, line := range lines {
 		shouldSkip := false
+		stringMode := false
+		stringText := ""
 
 		for idx := 0; idx < len(line); idx++ {
 			token := string(line[idx])
 
-			if tokenType, ok := tokenToType[token]; !ok {
+			if tokenType, ok := tokenToType[token]; !ok && token != "\"" && !stringMode {
 				fmt.Fprintf(os.Stderr, "[line %d] Error: Unexpected character: %s\n", lineNumber+1, token)
 				exitCode = 65
+			} else if idx == len(line)-1 && stringMode && token != "\"" {
+				fmt.Fprintf(os.Stderr, "[line %d] Error: Unterminated string.\n", lineNumber+1)
+				exitCode = 65
 			} else {
+				if token == "\"" {
+					if !stringMode {
+						stringMode = true
+						continue
+					}
+
+					fmt.Printf("STRING \"%s\" %s\n", stringText, stringText)
+					stringText = ""
+					stringMode = false
+					continue
+				}
+
+				if stringMode {
+					stringText += token
+					continue
+				}
+
 				if whiteSpace[token] {
 					continue
 				}
