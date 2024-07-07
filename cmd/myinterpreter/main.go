@@ -88,6 +88,25 @@ func main() {
 		"/": true,
 	}
 
+	reservedWords := map[string]string{
+		"and":    "AND",
+		"class":  "CLASS",
+		"else":   "ELSE",
+		"false":  "FALSE",
+		"for":    "FOR",
+		"fun":    "FUN",
+		"if":     "IF",
+		"nil":    "NIL",
+		"or":     "OR",
+		"print":  "PRINT",
+		"return": "RETURN",
+		"super":  "SUPER",
+		"this":   "THIS",
+		"true":   "TRUE",
+		"var":    "VAR",
+		"while":  "WHILE",
+	}
+
 	lines := strings.Split(string(rawFileContents), "\n")
 
 	isDigit := regexp.MustCompile(`[0-9]`)
@@ -152,7 +171,15 @@ func main() {
 				}
 
 				if (!isIdentifier(token) || idx == len(line)-1) && identifierMode {
-					fmt.Printf("IDENTIFIER %s null\n", identifierText)
+
+					reservedWord := reservedWords[identifierText]
+
+					if reservedWord != "" {
+						fmt.Printf("%s %s null\n", reservedWord, identifierText)
+					} else {
+						fmt.Printf("IDENTIFIER %s null\n", identifierText)
+					}
+
 					identifierMode = false
 					identifierText = ""
 				}
