@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"regexp"
 	"strings"
 )
 
@@ -72,15 +73,20 @@ func main() {
 
 	lines := strings.Split(string(rawFileContents), "\n")
 
+	isDigit := regexp.MustCompile(`[0-9]`)
+
 	for lineNumber, line := range lines {
 		shouldSkip := false
 		stringMode := false
 		stringText := ""
+		numberMode := false
+		numberText := ""
+		float := false
 
 		for idx := 0; idx < len(line); idx++ {
 			token := string(line[idx])
 
-			if tokenType, ok := tokenToType[token]; !ok && token != "\"" && !stringMode {
+			if tokenType, ok := tokenToType[token]; !ok && token != "\"" && !stringMode && !numberMode && !isDigit.MatchString(token) {
 				fmt.Fprintf(os.Stderr, "[line %d] Error: Unexpected character: %s\n", lineNumber+1, token)
 				exitCode = 65
 			} else if idx == len(line)-1 && stringMode && token != "\"" {
@@ -102,6 +108,55 @@ func main() {
 				if stringMode {
 					stringText += token
 					continue
+				}
+
+				if isDigit.MatchString(token) {
+					if !numberMode {
+						numberMode = true
+					}
+
+					numberText += token
+
+					if idx != len(line)-1 {
+						continue
+					}
+				}
+
+				if numberMode {
+					if token == "." {
+						if float {
+							fmt.Printf("NUMBER %s %s\n", numberText, numberText)
+							numberMode = false
+							numberText = ""
+							float = false
+							fmt.Printf("%s %s null\n", tokenType, token)
+						} else {
+							if idx != len(line)-1 {
+								float = true
+								numberText += token
+							} else {
+								fmt.Printf("NUMBER %s %s.0\n", numberText, numberText)
+								fmt.Printf("%s %s null\n", tokenType, token)
+							}
+						}
+
+						continue
+					} else {
+						if float {
+							fmt.Printf("NUMBER %s %s\n", numberText, numberText)
+						} else {
+							fmt.Printf("NUMBER %s %s.0\n", numberText, numberText)
+						}
+
+						numberMode = false
+						numberText = ""
+						float = false
+
+						if isDigit.MatchString(token) {
+							continue
+						}
+					}
+
 				}
 
 				if whiteSpace[token] {
