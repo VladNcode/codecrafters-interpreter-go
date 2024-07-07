@@ -41,19 +41,31 @@ func main() {
 		';': "SEMICOLON",
 		'*': "STAR",
 		'/': "SLASH",
+		'=': "EQUAL",
 	}
 
 	lines := strings.Split(string(rawFileContents), "\n")
 
 	for lineNumber, line := range lines {
-		for _, current := range line {
+
+		for idx := 0; idx < len(line); idx++ {
+			current := rune(line[idx])
+
+			if idx+2 <= len(line) && line[idx:idx+2] == "==" {
+				fmt.Printf("EQUAL_EQUAL == null\n")
+				idx += 1 // Skip the next character since its a part of '=='
+				continue
+			}
+
 			if name, ok := runeToName[current]; ok {
 				fmt.Printf("%s %c null\n", name, current)
 			} else {
 				fmt.Fprintf(os.Stderr, "[line %d] Error: Unexpected character: %c\n", lineNumber+1, current)
 				exitCode = 65
 			}
+
 		}
+
 	}
 
 	fmt.Printf("EOF  null")
